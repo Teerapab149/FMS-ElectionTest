@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+// import fs from 'fs';  <-- ลบออก เพราะ Vercel อ่าน public folder ไม่ได้
+// import path from 'path'; <-- ลบออก
 
 export const dynamic = 'force-dynamic';
 
@@ -11,26 +11,25 @@ export async function GET(request) {
 
     if (!id) return NextResponse.json({ images: [] });
 
-    // ✅ 1. แก้ Path ให้ตรงกับที่คุณต้องการ
-    // โครงสร้างจะเป็น: public/images/candidates/groupimage/party1
-    const folderName = `party${id}`; // เติมคำว่า party หน้าเลข id
+    // ✅ 1. กำหนด Path ตามโครงสร้างเดิมของคุณ
+    const folderName = `party${id}`; 
     
-    const directoryPath = path.join(
-      process.cwd(), 
-      'public', 'images', 'candidates', 'groupimage', folderName
-    );
+    // -------------------------------------------------------------
+    // จุดที่แก้: เปลี่ยนจากการอ่านไฟล์ (fs) เป็นการสร้าง URL ล่วงหน้า
+    // เพราะบน Vercel เราไม่สามารถเข้าไปส่องดูในโฟลเดอร์ public ได้
+    // -------------------------------------------------------------
+    
+    const images = [];
+    // สมมติว่าแต่ละพรรคมีรูปไม่เกิน 5 รูป (ปรับเลขนี้ได้ตามต้องการ)
+    const maxImagesToCheck = 5; 
 
-    // 2. เช็คว่ามีโฟลเดอร์นี้ไหม
-    if (!fs.existsSync(directoryPath)) {
-      return NextResponse.json({ images: [] });
+    for (let i = 1; i <= maxImagesToCheck; i++) {
+        // สร้าง path รูปตามโครงสร้าง: /images/candidates/groupimage/party1/1.jpg
+        // (ตรวจสอบนามสกุลไฟล์ของคุณด้วยว่าเป็น .jpg หรือ .png)
+        images.push(`/images/candidates/groupimage/${folderName}/${i}.jpg`);
     }
 
-    // 3. อ่านไฟล์และสร้าง URL กลับไป
-    const files = fs.readdirSync(directoryPath);
-    const images = files
-      .filter(file => /\.(jpg|jpeg|png|gif)$/i.test(file))
-      .map(file => `/images/candidates/groupimage/${folderName}/${file}`); // ⚠️ URL สำหรับหน้าเว็บต้องไม่มีคำว่า public
-
+    // ส่ง list รายชื่อไฟล์กลับไป (Frontend จะเป็นตัวเช็คเองว่าไฟล์ไหนมีจริง)
     return NextResponse.json({ images });
     
   } catch (error) {
