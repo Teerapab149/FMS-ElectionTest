@@ -14,7 +14,7 @@ function PartyPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const partyIdFromUrl = searchParams.get('id');
-  
+
   // Refs
   const chartSectionRef = useRef(null);
   const listSectionRef = useRef(null);
@@ -33,7 +33,7 @@ function PartyPageContent() {
   // Helper Functions
   const nextSlide = () => { if (galleryImages.length > 0) setCurrentBgIndex((prev) => (prev + 1) % galleryImages.length); };
   const prevSlide = () => { if (galleryImages.length > 0) setCurrentBgIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length); };
-  
+
   // ✅ ฟังก์ชันใหม่: จัดการรููปเสีย (ลบรูปที่โหลดไม่ได้ออกจาก list)
   const handleImageError = (badImageUrl) => {
     setGalleryImages((prev) => prev.filter((img) => img !== badImageUrl));
@@ -74,11 +74,11 @@ function PartyPageContent() {
   // 3. Fetch Gallery
   useEffect(() => {
     if (!activeParty?.id) return;
-    fetch(`/api/gallery?id=${activeParty.id}`)
+    fetch(`/api/gallery?id=${activeParty.number}`)
       .then(res => res.json())
       .then(data => { if (data.images?.length > 0) setGalleryImages(data.images); });
   }, [activeParty]);
-
+  
   // 4. Gallery Slideshow Interval
   useEffect(() => {
     if (galleryImages.length <= 1) return;
@@ -115,10 +115,10 @@ function PartyPageContent() {
                   galleryImages.map((img, idx) => (
                     <div key={img} className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${idx === currentBgIndex ? 'opacity-100' : 'opacity-0'}`}>
                       {/* ✅ เพิ่ม onError ตรงนี้ */}
-                      <img 
-                        src={img} 
-                        className="w-full h-full object-cover object-[center_30%]" 
-                        alt={`Cover ${idx}`} 
+                      <img
+                        src={img}
+                        className="w-full h-full object-cover object-[center_30%]"
+                        alt={`Cover ${idx}`}
                         onError={() => handleImageError(img)}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-60"></div>
@@ -165,9 +165,9 @@ function PartyPageContent() {
               <button onClick={() => setIsLightBoxOpen(false)} className="absolute top-10 right-6 z-[110] p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all"><X size={28} /></button>
               <div className="relative w-full h-full flex items-center justify-center p-4">
                 {/* ✅ เพิ่ม onError ใน Lightbox ด้วย */}
-                <img 
-                  src={galleryImages[currentBgIndex]} 
-                  className="max-w-full max-h-[85vh] object-contain shadow-2xl animate-in zoom-in-95 duration-300" 
+                <img
+                  src={galleryImages[currentBgIndex]}
+                  className="max-w-full max-h-[85vh] object-contain shadow-2xl animate-in zoom-in-95 duration-300"
                   onError={() => handleImageError(galleryImages[currentBgIndex])}
                 />
                 {galleryImages.length > 1 && (
