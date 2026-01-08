@@ -1,19 +1,26 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from "next/navigation";
-import { useSearchParams } from 'next/navigation';
+
+import { useState, useEffect, useRef, Suspense } from 'react'; // เพิ่ม Suspense
+import { useRouter, useSearchParams } from "next/navigation";
 import { Users, Loader2, X, User, ChevronDown, Move, Search, ChevronRight, Crown, Maximize2, ChevronLeft } from 'lucide-react';
 import Navbar from "../../components/Navbar";
 import PartyChart from "../../components/PartyChart";
 import { PARTY_THEMES, DEFAULT_THEME } from "../../utils/PartyTheme";
 
-export default function PartyPage() {
+// ----------------------------------------------------------------------
+// 1. สร้าง Component ย่อยเพื่อเก็บ Logic เดิมทั้งหมด (เพื่อเอาไปใส่ใน Suspense)
+// ----------------------------------------------------------------------
+function PartyPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const partyIdFromUrl = searchParams.get('id');
+  
+  // Refs
   const chartSectionRef = useRef(null);
   const listSectionRef = useRef(null);
   const chartContainerRef = useRef(null);
+
+  // States
   const [activeParty, setActiveParty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedMember, setSelectedMember] = useState(null);
@@ -22,11 +29,19 @@ export default function PartyPage() {
   const [showHint, setShowHint] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLightBoxOpen, setIsLightBoxOpen] = useState(false);
-  const nextSlide = () => { if (galleryImages.length > 0) setCurrentBgIndex((prev) => (prev + 1) % galleryImages.length); };
-  const prevSlide = () => { if (galleryImages.length > 0) setCurrentBgIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length); };
-  const currentTheme = PARTY_THEMES[partyIdFromUrl] || DEFAULT_THEME;
   const [isMounted, setIsMounted] = useState(false);
 
+  // Helper Functions
+  const nextSlide = () => { if (galleryImages.length > 0) setCurrentBgIndex((prev) => (prev + 1) % galleryImages.length); };
+  const prevSlide = () => { if (galleryImages.length > 0) setCurrentBgIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length); };
+  
+  const currentTheme = PARTY_THEMES[partyIdFromUrl] || DEFAULT_THEME;
+
+  // ----------------------------------------------------------------------
+  // จัดลำดับ useEffect ให้ถูกต้อง (Hooks ต้องอยู่บนสุด ห้ามมี return มาคั่นก่อน)
+  // ----------------------------------------------------------------------
+
+  // 1. Fetch Party Data
   useEffect(() => {
     const fetchData = async () => {
       if (partyIdFromUrl) {
@@ -35,27 +50,23 @@ export default function PartyPage() {
           if (res.ok) {
             const data = await res.json();
             const foundParty = data.find(p => p.number == partyIdFromUrl || p.id == partyIdFromUrl);
-            console.log(foundParty)
             if (foundParty) setActiveParty(foundParty);
           }
         } catch (error) { console.error("Error:", error); }
         finally { setLoading(false); }
       } else {
-        router.push("/candidates")
+        router.push("/candidates");
       }
     };
     fetchData();
-  }, [partyIdFromUrl]);
+  }, [partyIdFromUrl, router]);
 
-
+  // 2. Set Mounted (Client-side check)
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  if (!isMounted) {
-    return <div className="h-96 flex items-center justify-center">Loading chart...</div>;
-  }
-  
+  // 3. Fetch Gallery
   useEffect(() => {
     if (!activeParty?.id) return;
     fetch(`/api/gallery?id=${activeParty.id}`)
@@ -63,11 +74,21 @@ export default function PartyPage() {
       .then(data => { if (data.images?.length > 0) setGalleryImages(data.images); });
   }, [activeParty]);
 
+  // 4. Gallery Slideshow Interval
   useEffect(() => {
     if (galleryImages.length <= 1) return;
     const interval = setInterval(() => setCurrentBgIndex((prev) => (prev + 1) % galleryImages.length), 5000);
     return () => clearInterval(interval);
   }, [galleryImages]);
+
+  // ----------------------------------------------------------------------
+  // จบส่วน Hooks -> เริ่มส่วนการแสดงผล
+  // ----------------------------------------------------------------------
+
+  // ป้องกัน Error Recharts (width -1) โดยการเช็ค isMounted ตรงนี้
+  if (!isMounted) {
+    return <div className="h-screen flex items-center justify-center bg-slate-50">Loading chart...</div>;
+  }
 
   const scrollToList = () => listSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
   const filteredMembers = activeParty?.members?.filter(m => m.name.toLowerCase().includes(searchTerm.toLowerCase()) || m.position?.toLowerCase().includes(searchTerm.toLowerCase())) || [];
@@ -147,7 +168,6 @@ export default function PartyPage() {
           <section ref={chartSectionRef} className="relative w-full h-screen bg-[#02040a] flex flex-col border-t border-slate-900 overflow-hidden">
 
             {/* Header ของ Section 2 */}
-            {/* ✅ ใช้ flex-col ตลอดเวลา เพื่อให้เรียงจากบนลงล่างเสมอ */}
             <div className="absolute top-0 left-0 w-full z-20 pt-8 px-6 md:px-16 flex flex-col items-start gap-3 pointer-events-none">
 
               {/* 1. ส่วนหัวข้อ (Title) */}
@@ -324,6 +344,21 @@ export default function PartyPage() {
   );
 }
 
+// ----------------------------------------------------------------------
+// 2. Component หลัก (Wrapper) สำหรับ export ไปใช้
+// ----------------------------------------------------------------------
+export default function PartyPage() {
+  return (
+    // แก้ปัญหา Build Error ของ useSearchParams ด้วย Suspense
+    <Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50 text-slate-400">Loading Page...</div>}>
+      <PartyPageContent />
+    </Suspense>
+  );
+}
+
+// ----------------------------------------------------------------------
+// Helper Components
+// ----------------------------------------------------------------------
 function MemberImage({ url }) {
   const [error, setError] = useState(false);
   if (error || !url) return <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-300"><User className="w-10 h-10 md:w-16 md:h-16" /></div>;
