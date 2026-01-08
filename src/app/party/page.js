@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, Suspense } from 'react'; // เพิ่ม Suspense
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from "next/navigation";
 import { Users, Loader2, X, User, ChevronDown, Move, Search, ChevronRight, Crown, Maximize2, ChevronLeft } from 'lucide-react';
 import Navbar from "../../components/Navbar";
@@ -8,7 +8,7 @@ import PartyChart from "../../components/PartyChart";
 import { PARTY_THEMES, DEFAULT_THEME } from "../../utils/PartyTheme";
 
 // ----------------------------------------------------------------------
-// 1. สร้าง Component ย่อยเพื่อเก็บ Logic เดิมทั้งหมด (เพื่อเอาไปใส่ใน Suspense)
+// 1. สร้าง Component ย่อยเพื่อเก็บ Logic เดิมทั้งหมด
 // ----------------------------------------------------------------------
 function PartyPageContent() {
   const router = useRouter();
@@ -26,7 +26,6 @@ function PartyPageContent() {
   const [selectedMember, setSelectedMember] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
-  const [showHint, setShowHint] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLightBoxOpen, setIsLightBoxOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
@@ -35,10 +34,16 @@ function PartyPageContent() {
   const nextSlide = () => { if (galleryImages.length > 0) setCurrentBgIndex((prev) => (prev + 1) % galleryImages.length); };
   const prevSlide = () => { if (galleryImages.length > 0) setCurrentBgIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length); };
   
+  // ✅ ฟังก์ชันใหม่: จัดการรููปเสีย (ลบรูปที่โหลดไม่ได้ออกจาก list)
+  const handleImageError = (badImageUrl) => {
+    setGalleryImages((prev) => prev.filter((img) => img !== badImageUrl));
+    setCurrentBgIndex(0); // รีเซ็ต index เพื่อป้องกันหน้าขาว
+  };
+
   const currentTheme = PARTY_THEMES[partyIdFromUrl] || DEFAULT_THEME;
 
   // ----------------------------------------------------------------------
-  // จัดลำดับ useEffect ให้ถูกต้อง (Hooks ต้องอยู่บนสุด ห้ามมี return มาคั่นก่อน)
+  // Hooks
   // ----------------------------------------------------------------------
 
   // 1. Fetch Party Data
@@ -82,10 +87,10 @@ function PartyPageContent() {
   }, [galleryImages]);
 
   // ----------------------------------------------------------------------
-  // จบส่วน Hooks -> เริ่มส่วนการแสดงผล
+  // Render
   // ----------------------------------------------------------------------
 
-  // ป้องกัน Error Recharts (width -1) โดยการเช็ค isMounted ตรงนี้
+  // ป้องกัน Error Recharts
   if (!isMounted) {
     return <div className="h-screen flex items-center justify-center bg-slate-50">Loading chart...</div>;
   }
@@ -108,8 +113,14 @@ function PartyPageContent() {
               <div className="relative w-full aspect-[6/4] md:aspect-[20/9] lg:aspect-[2.5/1] overflow-hidden">
                 {galleryImages.length > 0 ? (
                   galleryImages.map((img, idx) => (
-                    <div key={idx} className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${idx === currentBgIndex ? 'opacity-100' : 'opacity-0'}`}>
-                      <img src={img} className="w-full h-full object-cover object-[center_30%]" alt={`Cover ${idx}`} />
+                    <div key={img} className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${idx === currentBgIndex ? 'opacity-100' : 'opacity-0'}`}>
+                      {/* ✅ เพิ่ม onError ตรงนี้ */}
+                      <img 
+                        src={img} 
+                        className="w-full h-full object-cover object-[center_30%]" 
+                        alt={`Cover ${idx}`} 
+                        onError={() => handleImageError(img)}
+                      />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-60"></div>
                     </div>
                   ))
@@ -149,11 +160,16 @@ function PartyPageContent() {
           </section>
 
           {/* LightBox */}
-          {isLightBoxOpen && (
+          {isLightBoxOpen && galleryImages.length > 0 && (
             <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center animate-in fade-in duration-300">
               <button onClick={() => setIsLightBoxOpen(false)} className="absolute top-10 right-6 z-[110] p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all"><X size={28} /></button>
               <div className="relative w-full h-full flex items-center justify-center p-4">
-                <img src={galleryImages[currentBgIndex]} className="max-w-full max-h-[85vh] object-contain shadow-2xl animate-in zoom-in-95 duration-300" />
+                {/* ✅ เพิ่ม onError ใน Lightbox ด้วย */}
+                <img 
+                  src={galleryImages[currentBgIndex]} 
+                  className="max-w-full max-h-[85vh] object-contain shadow-2xl animate-in zoom-in-95 duration-300" 
+                  onError={() => handleImageError(galleryImages[currentBgIndex])}
+                />
                 {galleryImages.length > 1 && (
                   <>
                     <button onClick={prevSlide} className="absolute left-4 md:left-10 p-4 text-white/50 hover:text-white transition-all"><ChevronLeft size={48} /></button>
