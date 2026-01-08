@@ -71,14 +71,26 @@ function PartyPageContent() {
     setIsMounted(true);
   }, []);
 
-  // 3. Fetch Gallery
+  // -----------------------------------------------------------
+  // 3. Generate Gallery URLs (สร้าง URL รูปเอง โดยไม่ง้อ API)
+  // -----------------------------------------------------------
   useEffect(() => {
-    if (!activeParty?.id) return;
-    fetch(`/api/gallery?id=${activeParty.number}`)
-      .then(res => res.json())
-      .then(data => { if (data.images?.length > 0) setGalleryImages(data.images); });
+    if (!activeParty) return;
+
+    // ใช้ "เบอร์พรรค" (number) เป็นชื่อโฟลเดอร์เสมอ (เช่น party1, party2)
+    const folderName = `party${activeParty.number}`;
+    const generatedImages = [];
+
+    // วนลูปสร้าง path รูป 1.jpg ถึง 5.jpg (ใช้ index + 1 แบบที่คุณบอก)
+    for (let i = 1; i <= 5; i++) {
+      // ผลลัพธ์: /images/candidates/groupimage/party1/1.jpg
+      generatedImages.push(`/images/candidates/groupimage/${folderName}/${i}.jpg`);
+    }
+
+    setGalleryImages(generatedImages);
+    setCurrentBgIndex(0); // รีเซ็ตสไลด์ไปรูปแรก
   }, [activeParty]);
-  
+
   // 4. Gallery Slideshow Interval
   useEffect(() => {
     if (galleryImages.length <= 1) return;
