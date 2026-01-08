@@ -25,6 +25,7 @@ export default function PartyPage() {
   const nextSlide = () => { if (galleryImages.length > 0) setCurrentBgIndex((prev) => (prev + 1) % galleryImages.length); };
   const prevSlide = () => { if (galleryImages.length > 0) setCurrentBgIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length); };
   const currentTheme = PARTY_THEMES[partyIdFromUrl] || DEFAULT_THEME;
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,6 +47,15 @@ export default function PartyPage() {
     fetchData();
   }, [partyIdFromUrl]);
 
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return <div className="h-96 flex items-center justify-center">Loading chart...</div>;
+  }
+  
   useEffect(() => {
     if (!activeParty?.id) return;
     fetch(`/api/gallery?id=${activeParty.id}`)
