@@ -5,7 +5,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '../components/Navbar';
 import CountdownTimer from '../components/CountdownTimer';
-import { LogIn, Vote, BarChart3, PieChart, Sparkles, TrendingUp, CheckCircle2, Users, ArrowRight, User } from "lucide-react";
+// ✅ Import Component ใหม่
+import MeetCandidatesCard from '../components/MeetCandidatesCard';
+
+import { LogIn, Vote, BarChart3, PieChart, Sparkles, TrendingUp, CheckCircle2, Users, ArrowRight, Clock } from "lucide-react";
 
 export default function Home() {
   const [stats, setStats] = useState({ totalEligible: 0, totalVoted: 0, percentage: "0.00" });
@@ -26,7 +29,7 @@ export default function Home() {
     ? [...slideshowImages, slideshowImages[0]]
     : slideshowImages;
 
-  // ✅ 1. useEffect หลัก: เช็ค User และ ดึงข้อมูล Stats/Candidates
+  // 1. useEffect หลัก
   useEffect(() => {
     setMounted(true);
     const storedUser = localStorage.getItem("currentUser");
@@ -37,17 +40,15 @@ export default function Home() {
 
     const fetchData = async () => {
       try {
-        const res = await fetch('/api/home-info'); // เรียก API
+        const res = await fetch('/api/home-info');
         if (!res.ok) throw new Error("Failed to fetch");
 
         const data = await res.json();
 
-        // เก็บข้อมูลผู้สมัครลง State (เพื่อเอาไปโชว์ในวงกลม)
         if (data.candidates) {
           setCandidates(data.candidates);
         }
 
-        // อัปเดต Stats
         const eligible = data.stats?.totalEligible || 0;
         const voted = data.stats?.totalVoted || 0;
         const percent = eligible > 0
@@ -65,61 +66,30 @@ export default function Home() {
       }
     };
 
-    fetchData(); // ⚠️ อย่าลืมเรียกฟังก์ชันนี้
-  }, []); // ⚠️ ปิดวงเล็บ useEffect ตรงนี้
+    fetchData();
+  }, []);
 
-  // 2. Loop Effect (ทำงานเฉพาะเมื่อมีหลายรูป)
+  // 2. Loop Effect
   useEffect(() => {
     if (!isMultiImage) return;
-
     const interval = setInterval(() => {
       setCurrentImageIndex((prevIndex) => prevIndex + 1);
       setIsTransitioning(true);
-    }, 10000); // 10 วินาที
+    }, 10000);
     return () => clearInterval(interval);
   }, [isMultiImage]);
 
-  // 3. Magic Reset Effect (ทำงานเฉพาะเมื่อมีหลายรูป)
+  // 3. Magic Reset Effect
   useEffect(() => {
     if (!isMultiImage) return;
-
     if (currentImageIndex === extendedImages.length - 1) {
       const resetTimeout = setTimeout(() => {
         setIsTransitioning(false);
         setCurrentImageIndex(0);
-      }, 1500); // ต้องตรงกับ duration ใน style
+      }, 1500);
       return () => clearTimeout(resetTimeout);
     }
   }, [currentImageIndex, extendedImages.length, isMultiImage]);
-
-  // ✅ Component ย่อยสำหรับจัดการรูปภาพ (ใส่ไว้ในไฟล์ page.js ได้เลย)
-  const CandidateAvatar = ({ logoUrl, index }) => {
-    const [imageError, setImageError] = useState(false);
-
-    // ถ้าไม่มี URL หรือ โหลดรูปแล้ว Error ให้โชว์ไอคอน User
-    if (!logoUrl || imageError) {
-      return (
-        <User
-          size={20}
-          className={`opacity-70 ${index === 0 ? 'text-blue-600' : index === 1 ? 'text-purple-600' : 'text-pink-600'
-            }`}
-        />
-      );
-    }
-
-    // ถ้ามี URL ให้ลองโหลดรูป
-    return (
-      <Image
-        src={logoUrl}
-        alt={`Candidate ${index + 1}`}
-        fill
-        className="object-cover" // ✅ บังคับให้รูปไม่เบี้ยวและเต็มวงกลม
-        onError={() => setImageError(true)} // ✅ ดัก Error ตรงนี้
-        sizes="44px"
-      />
-    );
-  };
-
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/20 text-gray-900 font-sans selection:bg-purple-300 relative overflow-hidden">
@@ -131,7 +101,6 @@ export default function Home() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:40px_40px]"></div>
       </div>
 
-      {/* Watermark 2026 */}
       <div className="hidden lg:flex fixed top-0 right-1 h-full items-center justify-end z-0 pointer-events-none select-none overflow-hidden">
         <span className="text-[17em] font-black text-gray-900 opacity-[0.03] leading-none tracking-tighter transform rotate-90 translate-x-[20%] whitespace-nowrap">2026</span>
       </div>
@@ -140,13 +109,21 @@ export default function Home() {
       <div className="relative z-10 flex flex-col flex-grow">
         <Navbar />
 
-        <main className="flex-grow flex flex-col justify-center py-8 md:py-10 px-4 md:px-8">
+        <main className="flex-grow flex flex-col justify-center py-4 md:py-3 px-5 md:px-8">
           <div className="container mx-auto max-w-7xl">
-            <div className="flex flex-col lg:flex-row items-center justify-between gap-10 lg:gap-20">
+            {/* ✅ 1. แก้ไข gap-14 เหลือ gap-5 (Mobile) เพื่อดึง 2 ก้อนเข้าหากัน */}
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-5 lg:gap-20">
 
-              {/* ===== LEFT SIDE (Text / Content) ===== */}
-              <div className="w-full lg:w-1/2 text-center lg:text-left space-y-8 md:space-y-10 relative z-20">
-                <div className="flex justify-center lg:justify-start w-full">
+              {/* ===== LEFT SIDE ===== */}
+              <div className="w-full lg:w-1/2 text-center lg:text-left space-y-8 md:space-y-7 relative z-20 transform lg:-translate-y-20">
+
+                {/* [MOBILE ONLY] Countdown */}
+                <div className="w-full lg:hidden">
+                  <CountdownTimer compact={true} />
+                </div>
+
+                {/* [DESKTOP/iPad] Badge */}
+                <div className="hidden md:flex justify-center lg:justify-start w-full">
                   <div className="relative group inline-flex justify-center items-center cursor-pointer animate-heartbeat hover:animate-none">
                     <div className="absolute -inset-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
                     <div className="relative flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-2.5 rounded-full bg-white/90 backdrop-blur-sm border border-purple-200/50 shadow-lg">
@@ -162,7 +139,8 @@ export default function Home() {
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                {/* 3. Title Area */}
+                <div className="space-y-0 md:space-y-1">
                   <div className="flex flex-row items-center justify-center lg:justify-start gap-1 md:gap-2">
                     <h1 className="text-7xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter leading-none">
                       <span className="text-transparent bg-clip-text pr-2 bg-gradient-to-br from-gray-900 via-purple-900 to-pink-900 pb-2">SAMO</span>
@@ -171,138 +149,83 @@ export default function Home() {
                       <span className="text-5xl sm:text-4xl md:text-5xl lg:text-7xl font-black text-white">49</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-center lg:justify-start gap-4">
-                    <div className="h-8 w-1.5 bg-gradient-to-b from-purple-800 via-purple-600 to-purple-800 rounded-full"></div>
-                    <p className="text-lg md:text-xl font-bold text-gray-500 tracking-[0.3em] uppercase">FMS Election 2026</p>
+
+                  {/* FMS ELECTION (Mobile) */}
+                  <div className="flex md:hidden items-center justify-center gap-3 mt-2 mb-4 opacity-90">
+                    <div className="h-[3px] w-8 bg-gradient-to-r from-transparent to-purple-500 rounded-full"></div>
+                    <p className="text-sm font-black text-purple-900 tracking-[0.2em] uppercase">FMS Election 2026</p>
+                    <div className="h-[3px] w-8 bg-gradient-to-l from-transparent to-purple-500 rounded-full"></div>
+                  </div>
+
+                  {/* Desktop/iPad */}
+                  <div className="hidden md:flex items-center justify-center lg:justify-start gap-3 mt-2">
+                    <div className="h-6 w-1.5 md:h-8 bg-gradient-to-b from-purple-800 via-purple-600 to-purple-800 rounded-full"></div>
+                    <p className="text-base md:text-xl font-bold text-gray-500 tracking-[0.3em] uppercase">FMS Election 2026</p>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-800 leading-tight">โครงการเลือกตั้งคณะกรรมการบริหาร</h2>
-                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-500">สโมสรนักศึกษาคณะวิทยาการจัดการ</h3>
-                  <div className="inline-block mt-2 px-3 py-1 bg-purple-100 text-purple-700 text-sm font-bold rounded-lg">ประจำปีการศึกษา 2569</div>
+                {/* Thai Text: Hidden Mobile */}
+                <div className="space-y-1 md:space-y-2 hidden md:block">
+                  <h2 className="text-xl sm:text-3xl md:text-4xl font-black text-gray-800 leading-tight">โครงการเลือกตั้งคณะกรรมการบริหาร</h2>
+                  <h3 className="text-base sm:text-xl md:text-2xl font-bold text-gray-500">สโมสรนักศึกษาคณะวิทยาการจัดการ</h3>
+                  <div className="inline-block mt-1 px-3 py-1 bg-purple-100 text-purple-700 text-xs md:text-sm font-bold rounded-lg">ประจำปีการศึกษา 2569</div>
                 </div>
 
-                <div className="flex flex-col items-center lg:items-start gap-4 md:gap-6 pt-4">
-                  <Link href={mounted && user?.isVoted ? "/results" : "/vote"} className="w-full sm:w-auto">
-                    <button className={`w-full sm:w-auto group relative overflow-hidden rounded-2xl text-white transition-all duration-300 hover:scale-105 ${mounted && user?.isVoted ? 'bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg' : 'bg-gradient-to-r from-[#8A2680] to-purple-600 shadow-lg'}`}>
-                      <span className="relative flex items-center justify-center gap-3 py-4 px-10 font-bold text-xl">
-                        {mounted && user?.isVoted ? <>ดูผลคะแนน <BarChart3 /></> : mounted && user ? <>Vote Now <Vote className="animate-pulse" /></> : <>เข้าสู่ระบบ <LogIn /></>}
+                {/* 5. Action Buttons */}
+                <div className="flex flex-col items-center lg:items-start gap-4 pt-0 lg-mt-1 w-full">
+
+                  {/* Vote Button */}
+                  <Link href={mounted && user?.isVoted ? "/results" : "/vote"} className="w-full flex justify-center lg:justify-start">
+                    <button className={`w-[85%] sm:w-auto group relative overflow-hidden rounded-2xl text-white transition-all duration-300 active:scale-95 ${mounted && user?.isVoted ? 'bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg' : 'bg-gradient-to-r from-[#8A2680] to-purple-600 shadow-lg'}`}>
+                      <span className="relative flex items-center justify-center gap-3 py-4 px-8 font-black text-xl md:text-xl uppercase tracking-wide">
+                        {mounted && user?.isVoted ? <>VIEW RESULTS <BarChart3 /></> : mounted && user ? <>VOTE NOW <Vote className="animate-pulse" /></> : <>LOGIN <LogIn /></>}
                       </span>
+                      <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent to-white opacity-20 group-hover:animate-shine" />
                     </button>
                   </Link>
-                  <div className="w-full sm:w-auto"><CountdownTimer /></div>
+
+                  {/* ✅ 2. ปรับ Padding ด้านล่างให้เป็น 0 (pb-0) เพื่อไม่ให้ดัน Stats ลงไปไกล */}
+                  <div className="w-full block pt-3 pb-0 lg:hidden">
+                    <MeetCandidatesCard candidates={candidates} />
+                  </div>
+
+                  {/* Countdown Desktop */}
+                  <div className="w-full sm:w-auto hidden lg:block"><CountdownTimer /></div>
                 </div>
               </div>
 
-              {/* ===== RIGHT SIDE (Stats & Image Slideshow) ===== */}
-              <div className="relative flex flex-col items-center w-full lg:w-1/2 mt-10 lg:mt-0 gap-8">
+              {/* ===== RIGHT SIDE ===== */}
+              {/* ✅ 3. แก้ไข gap-8 เป็น gap-4 (Mobile) ให้รูปติดกับ Stats มากขึ้น */}
+              <div className="relative flex flex-col items-center w-full lg:w-1/2 -mt-5 lg:mt-10 gap-4 lg:gap-5">
 
-                {/* ✅ Compact & Balanced Design - เหมาะทุกหน้าจอ */}
-                <Link href="/candidates" className="group block mb-6 w-full max-w-[85%] sm:max-w-md lg:max-w-full mx-auto">
-                  <div className="relative transition-all duration-400 transform group-hover:-translate-y-2 group-hover:scale-[1.02]">
+                {/* Desktop Component */}
+                <div className="hidden lg:block w-full">
+                  <MeetCandidatesCard candidates={candidates} />
+                </div>
 
-                    {/* ✨ Subtle Gradient Border */}
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-400/60 via-purple-400/60 to-pink-400/60 rounded-[1.5rem] opacity-50 group-hover:opacity-80 blur transition-all duration-500"></div>
-
-                    {/* Soft glow */}
-                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-pink-400/20 rounded-[1.5rem] blur-xl opacity-40 group-hover:opacity-70 transition-all duration-500"></div>
-
-                    {/* การ์ดหลัก - ขนาดพอดี */}
-                    <div className="relative w-full bg-gradient-to-br from-white via-blue-50/20 to-purple-50/20 rounded-[1.4rem] p-4 md:p-5 flex items-center justify-between gap-3 overflow-hidden border border-white/80 shadow-lg group-hover:shadow-xl transition-all duration-400 backdrop-blur-sm">
-
-                      {/* Background Pattern - เบาลง */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-purple-50/20 to-pink-50/30 -z-10"></div>
-
-                      {/* Decorative shape - ขนาดเล็กลง */}
-                      <div className="absolute top-0 right-0 w-24 h-24 md:w-32 md:h-32 bg-gradient-to-bl from-blue-100/30 via-purple-100/20 to-pink-100/30 rounded-bl-[4rem] -z-10 transition-all duration-600 group-hover:scale-125 group-hover:rotate-6"></div>
-
-                      <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-purple-200/20 to-pink-200/20 rounded-full blur-2xl -z-10 transition-all duration-600 group-hover:scale-150"></div>
-
-                      {/* Minimal sparkle - เหลือ 1 จุด */}
-                      <div className="absolute top-3 right-6 w-2 h-2 bg-purple-300/60 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 animate-ping"></div>
-
-                      {/* 👈 ฝั่งซ้าย: ข้อความชัดเจน */}
-                      <div className="flex-1 flex flex-col gap-1 md:gap-1.5 z-10">
-                        <div className="flex items-center gap-2">
-                          <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400/70 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-gradient-to-r from-blue-500 to-purple-500"></span>
-                          </span>
-                          <p className="text-[9px] md:text-[10px] font-extrabold tracking-wider uppercase text-blue-600">
-                            Meet The Candidates
-                          </p>
-                        </div>
-
-                        <h3 className="text-sm md:text-base font-black text-slate-900 leading-tight group-hover:text-purple-700 transition-colors duration-300">
-                          ยังไม่รู้จักผู้สมัคร?
-                        </h3>
-
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-[11px] md:text-xs font-bold text-slate-600 group-hover:text-slate-800 transition-colors">
-                            ทำความรู้จักเลย
-                          </span>
-                          <span className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-[9px] md:text-[10px] font-black px-2 md:px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md shadow-purple-400/40 group-hover:shadow-lg group-hover:shadow-purple-400/50 group-hover:scale-105 transition-all duration-300">
-                            คลิก <ArrowRight size={9} className="group-hover:translate-x-0.5 transition-transform" />
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* 👉 ฝั่งขวา: Avatar Stack - ขนาดพอดี */}
-                      <div className="flex items-center -space-x-2.5 md:-space-x-3 pl-2 z-10">
-                        {candidates
-                          .filter(c => c.number !== 0)
-                          .slice(0, 4)
-                          .map((candidate, index) => (
-                            <div key={candidate.id || index} className={`
-              relative w-10 h-10 md:w-12 md:h-12 rounded-full border-[3px] border-white shadow-md flex items-center justify-center overflow-hidden
-              transform transition-all duration-400 
-              ${index === 0 ? 'z-30 group-hover:-translate-x-2 group-hover:scale-110 bg-gradient-to-br from-blue-100 to-cyan-200 shadow-blue-300/40 group-hover:shadow-lg group-hover:shadow-blue-300/50' : ''}
-              ${index === 1 ? 'z-20 group-hover:-translate-y-2 group-hover:scale-110 bg-gradient-to-br from-purple-100 to-purple-200 shadow-purple-300/40 group-hover:shadow-lg group-hover:shadow-purple-300/50' : ''}
-              ${index === 2 ? 'z-10 group-hover:translate-x-2 group-hover:scale-110 bg-gradient-to-br from-pink-100 to-pink-200 shadow-pink-300/40 group-hover:shadow-lg group-hover:shadow-pink-300/50' : ''}
-              ${index === 3 ? 'z-20 group-hover:-translate-y-2 group-hover:scale-110 bg-gradient-to-br from-indigo-100 to-blue-200 shadow-indigo-300/40 group-hover:shadow-lg group-hover:shadow-indigo-300/50' : ''}
-            `}>
-                              <CandidateAvatar logoUrl={candidate?.logoUrl} index={index} />
-
-                              {/* Subtle glow */}
-                              <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            </div>
-                          ))
-                        }
-
-                        {/* Arrow Button - ขนาดพอดี */}
-                        <div className="w-8 h-8 md:w-9 md:h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 border-2 border-white flex items-center justify-center text-white shadow-md shadow-purple-400/40 -ml-2 z-40 transform transition-all duration-400 group-hover:translate-x-2 group-hover:scale-110 group-hover:rotate-45 group-hover:shadow-lg group-hover:shadow-purple-400/50">
-                          <ArrowRight size={14} className="group-hover:scale-105 transition-transform" />
-                        </div>
-                      </div>
-
-                    </div>
-                  </div>
-                </Link>
-                
                 {/* 1. Stats Cards */}
-                <div className="relative z-20 w-full max-w-[550px] bg-white/70 backdrop-blur-md rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 p-6 lg:p-8 hover:border-purple-200 transition-all duration-300">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-xl font-bold text-gray-800">สถิติการลงคะแนน</h3>
-                    <TrendingUp className="w-6 h-6 text-green-500" />
+                <div className="relative z-20 w-full max-w-[550px] bg-white/70 backdrop-blur-md rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/60 p-5 lg:p-6 hover:border-purple-200 transition-all duration-300">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg md:text-xl font-bold text-gray-800">สถิติการลงคะแนน</h3>
+                    <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-green-500" />
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="flex flex-col items-center p-3 bg-white/50 rounded-2xl border border-gray-100 hover:shadow-md transition-shadow">
-                      <Users className="w-5 h-5 text-gray-400 mb-2" />
-                      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">ผู้มีสิทธิ</div>
-                      <div className="text-2xl font-black text-gray-800">{stats.totalEligible.toLocaleString()}</div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="flex flex-col items-center p-2.5 bg-white/50 rounded-2xl border border-gray-100 hover:shadow-md transition-shadow">
+                      <Users className="w-4 h-4 md:w-5 md:h-5 text-gray-400 mb-1" />
+                      <div className="text-[9px] md:text-[10px] font-bold text-gray-400 uppercase tracking-wider">ผู้มีสิทธิ</div>
+                      <div className="text-xl md:text-2xl font-black text-gray-800">{stats.totalEligible.toLocaleString()}</div>
                     </div>
-                    <div className="flex flex-col items-center p-3 bg-purple-50/50 rounded-2xl border border-purple-100 relative overflow-hidden hover:shadow-md transition-shadow">
-                      <CheckCircle2 className="w-5 h-5 text-purple-600 mb-2 relative z-10" />
-                      <div className="text-[10px] font-bold text-purple-600 uppercase tracking-wider relative z-10">ใช้สิทธิแล้ว</div>
-                      <div className="text-2xl font-black text-purple-900 relative z-10">{stats.totalVoted.toLocaleString()}</div>
+                    <div className="flex flex-col items-center p-2.5 bg-purple-50/50 rounded-2xl border border-purple-100 relative overflow-hidden hover:shadow-md transition-shadow">
+                      <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-purple-600 mb-1 relative z-10" />
+                      <div className="text-[9px] md:text-[10px] font-bold text-purple-600 uppercase tracking-wider relative z-10">ใช้สิทธิแล้ว</div>
+                      <div className="text-xl md:text-2xl font-black text-purple-900 relative z-10">{stats.totalVoted.toLocaleString()}</div>
                     </div>
-                    <div className="flex flex-col items-center p-3 bg-green-50/50 rounded-2xl border border-green-100 hover:shadow-md transition-shadow">
-                      <PieChart className="w-5 h-5 text-green-600 mb-2" />
-                      <div className="text-[10px] font-bold text-green-600 uppercase tracking-wider">ร้อยละ</div>
+                    <div className="flex flex-col items-center p-2.5 bg-green-50/50 rounded-2xl border border-green-100 hover:shadow-md transition-shadow">
+                      <PieChart className="w-4 h-4 md:w-5 md:h-5 text-green-600 mb-1" />
+                      <div className="text-[9px] md:text-[10px] font-bold text-green-600 uppercase tracking-wider">ร้อยละ</div>
                       <div className="flex items-baseline">
-                        <span className="text-2xl font-black text-green-800">{stats.percentage}</span>
-                        <span className="text-xs font-bold text-green-600 ml-1">%</span>
+                        <span className="text-xl md:text-2xl font-black text-green-800">{stats.percentage}</span>
+                        <span className="text-[10px] md:text-xs font-bold text-green-600 ml-1">%</span>
                       </div>
                     </div>
                   </div>
@@ -336,7 +259,7 @@ export default function Home() {
                   </div>
 
                   {isMultiImage && (
-                    <div className="absolute -bottom-8 left-0 right-0 flex justify-center gap-2">
+                    <div className="absolute -bottom-6 left-0 right-0 flex justify-center gap-1.5">
                       {slideshowImages.map((_, index) => (
                         <div
                           key={index}
