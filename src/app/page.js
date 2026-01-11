@@ -151,7 +151,7 @@ export default function Home() {
                   </div>
 
                   {/* FMS ELECTION (Mobile) */}
-                  <div className="flex md:hidden items-center justify-center gap-3 mt-2 mb-4 opacity-90">
+                  <div className="flex items-center justify-center gap-3 mt-2 mb-4 opacity-90">
                     <div className="h-[3px] w-8 bg-gradient-to-r from-transparent to-purple-500 rounded-full"></div>
                     <p className="text-sm font-black text-purple-900 tracking-[0.2em] uppercase">FMS Election 2026</p>
                     <div className="h-[3px] w-8 bg-gradient-to-l from-transparent to-purple-500 rounded-full"></div>
@@ -165,7 +165,7 @@ export default function Home() {
                 </div>
 
                 {/* Thai Text: Hidden Mobile */}
-                <div className="space-y-1 md:space-y-2 hidden md:block">
+                <div className="space-y-2 md:space-y-2 md:block">
                   <h2 className="text-xl sm:text-3xl md:text-4xl font-black text-gray-800 leading-tight">โครงการเลือกตั้งคณะกรรมการบริหาร</h2>
                   <h3 className="text-base sm:text-xl md:text-2xl font-bold text-gray-500">สโมสรนักศึกษาคณะวิทยาการจัดการ</h3>
                   <div className="inline-block mt-1 px-3 py-1 bg-purple-100 text-purple-700 text-xs md:text-sm font-bold rounded-lg">ประจำปีการศึกษา 2569</div>
