@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react'; // ✅ เพิ่ม Suspense
 import { useRouter } from "next/navigation";
 import { useSearchParams } from 'next/navigation';
 import { Users, Loader2, X, User, ChevronDown, Move, Search, ChevronRight, Crown, Maximize2, ChevronLeft } from 'lucide-react';
@@ -7,7 +7,8 @@ import Navbar from "../../components/Navbar";
 import PartyChart from "../../components/PartyChart";
 import { PARTY_THEMES, DEFAULT_THEME } from "../../utils/PartyTheme";
 
-export default function PartyPage() {
+// 1. เปลี่ยนชื่อฟังก์ชันหลักเดิมเป็น PartyPageContent
+function PartyPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const partyIdFromUrl = searchParams.get('id');
@@ -309,4 +310,17 @@ function MemberImage({ url }) {
   const [error, setError] = useState(false);
   if (error || !url) return <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-300"><User className="w-10 h-10 md:w-16 md:h-16" /></div>;
   return <img src={url} className="w-full h-full object-cover" onError={() => setError(true)} alt="member" />;
+}
+
+// 2. Export ฟังก์ชันใหม่ที่หุ้มด้วย Suspense
+export default function PartyPage() {
+  return (
+    <Suspense fallback={
+      <div className="h-screen flex items-center justify-center bg-slate-50">
+        <Loader2 className="animate-spin w-10 h-10 text-purple-600" />
+      </div>
+    }>
+      <PartyPageContent />
+    </Suspense>
+  );
 }
