@@ -1,20 +1,19 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react'; // ✅ เพิ่ม Suspense ตรงนี้
 import { useRouter } from "next/navigation";
 import { useSearchParams } from 'next/navigation';
 import { Users, Loader2, X, User, ChevronDown, Move, Search, ChevronRight, Crown, Maximize2, ChevronLeft } from 'lucide-react';
 import Navbar from "../../components/Navbar";
 import PartyChart from "../../components/PartyChart";
 import { PARTY_THEMES, DEFAULT_THEME } from "../../utils/PartyTheme";
-// ✅ 1. เพิ่ม Import Component
 import BackToVoteBar from "../../components/BackToVoteBar"; 
 
-export default function PartyPage() {
+// ✅ 1. เปลี่ยนชื่อ Function เดิมจาก PartyPage เป็น PartyContent (เป็นไส้ใน)
+function PartyContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const partyIdFromUrl = searchParams.get('id');
   
-  // ✅ 2. รับค่า source จาก URL
   const source = searchParams.get('source'); 
 
   const chartSectionRef = useRef(null);
@@ -25,12 +24,13 @@ export default function PartyPage() {
   const [selectedMember, setSelectedMember] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
   const [currentBgIndex, setCurrentBgIndex] = useState(0);
+  // eslint-disable-next-line no-unused-vars
   const [showHint, setShowHint] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLightBoxOpen, setIsLightBoxOpen] = useState(false);
   const nextSlide = () => { if (galleryImages.length > 0) setCurrentBgIndex((prev) => (prev + 1) % galleryImages.length); };
   const prevSlide = () => { if (galleryImages.length > 0) setCurrentBgIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length); };
-  const currentTheme = PARTY_THEMES[partyIdFromUrl] || DEFAULT_THEME;
+  const currentTheme = (partyIdFromUrl && PARTY_THEMES[partyIdFromUrl]) ? PARTY_THEMES[partyIdFromUrl] : DEFAULT_THEME;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -309,7 +309,7 @@ export default function PartyPage() {
         </main>
       )}
 
-      {/* ✅ 3. เช็คว่าถ้า source=vote ให้โชว์ BackToVoteBar */}
+      {/* ✅ เช็คว่าถ้า source=vote ให้โชว์ BackToVoteBar */}
       {source === 'vote' && <BackToVoteBar />}
       
       {/* Footer */}
@@ -317,6 +317,15 @@ export default function PartyPage() {
         <p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© FMS@PSU 2026. All Rights Reserved.</p>
       </footer>
     </div>
+  );
+}
+
+// ✅ 2. สร้าง Function ใหม่ชื่อ PartyPage ที่ return Suspense ครอบ PartyContent
+export default function PartyPage() {
+  return (
+    <Suspense fallback={<div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin w-10 h-10 text-purple-600" /></div>}>
+      <PartyContent />
+    </Suspense>
   );
 }
 
