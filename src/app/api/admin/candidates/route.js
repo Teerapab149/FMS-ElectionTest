@@ -75,7 +75,7 @@ export async function DELETE(req) {
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
   }
-}
+} 
 
 export async function POST(req) {
     try {

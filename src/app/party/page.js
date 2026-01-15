@@ -1,17 +1,22 @@
 'use client';
-import { useState, useEffect, useRef, Suspense } from 'react'; // ✅ เพิ่ม Suspense
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from "next/navigation";
 import { useSearchParams } from 'next/navigation';
 import { Users, Loader2, X, User, ChevronDown, Move, Search, ChevronRight, Crown, Maximize2, ChevronLeft } from 'lucide-react';
 import Navbar from "../../components/Navbar";
 import PartyChart from "../../components/PartyChart";
 import { PARTY_THEMES, DEFAULT_THEME } from "../../utils/PartyTheme";
+// ✅ 1. เพิ่ม Import Component
+import BackToVoteBar from "../../components/BackToVoteBar"; 
 
-// 1. เปลี่ยนชื่อฟังก์ชันหลักเดิมเป็น PartyPageContent
-function PartyPageContent() {
+export default function PartyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const partyIdFromUrl = searchParams.get('id');
+  
+  // ✅ 2. รับค่า source จาก URL
+  const source = searchParams.get('source'); 
+
   const chartSectionRef = useRef(null);
   const listSectionRef = useRef(null);
   const chartContainerRef = useRef(null);
@@ -66,7 +71,9 @@ function PartyPageContent() {
   if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin w-10 h-10 text-purple-600" /></div>;
 
   return (
-    <div className="flex flex-col min-h-screen font-sans text-slate-800 bg-[#Fdfdfd] overflow-x-hidden">
+    <div className="flex flex-col min-h-screen font-sans text-slate-800 bg-[#Fdfdfd] overflow-x-hidden"> 
+      {/* 👆 เพิ่ม pb-20 เพื่อกันเนื้อหาโดนปุ่มบัง */}
+      
       <div className="fixed top-0 w-full z-[60] bg-white/80 backdrop-blur-md border-b border-slate-100"><Navbar /></div>
 
       {activeParty ? (
@@ -301,7 +308,14 @@ function PartyPageContent() {
           <button onClick={() => window.location.reload()} className="mt-8 px-6 py-2 rounded-full border border-slate-200 text-sm font-bold text-slate-500 hover:bg-slate-50 transition-all">ลองใหม่อีกครั้ง</button>
         </main>
       )}
-      <footer className="w-full py-6 bg-white/50 backdrop-blur-md border-t border-gray-200/50 text-center relative z-50"><p className="text-sm text-gray-500 font-medium">© FMS@PSU 2026. All Rights Reserved.</p></footer>
+
+      {/* ✅ 3. เช็คว่าถ้า source=vote ให้โชว์ BackToVoteBar */}
+      {source === 'vote' && <BackToVoteBar />}
+      
+      {/* Footer */}
+      <footer className="relative z-50 shrink-0 w-full py-4 bg-white/50 backdrop-blur-sm border-t border-slate-100 text-center mt-auto">
+        <p className="text-[10px] md:text-xs text-slate-400 font-medium tracking-widest uppercase">© FMS@PSU 2026. All Rights Reserved.</p>
+      </footer>
     </div>
   );
 }
@@ -310,17 +324,4 @@ function MemberImage({ url }) {
   const [error, setError] = useState(false);
   if (error || !url) return <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-300"><User className="w-10 h-10 md:w-16 md:h-16" /></div>;
   return <img src={url} className="w-full h-full object-cover" onError={() => setError(true)} alt="member" />;
-}
-
-// 2. Export ฟังก์ชันใหม่ที่หุ้มด้วย Suspense
-export default function PartyPage() {
-  return (
-    <Suspense fallback={
-      <div className="h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="animate-spin w-10 h-10 text-purple-600" />
-      </div>
-    }>
-      <PartyPageContent />
-    </Suspense>
-  );
 }

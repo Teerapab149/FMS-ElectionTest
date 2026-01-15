@@ -15,7 +15,7 @@ import {
 const OverviewTab = () => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [phase, setPhase] = useState('LOADING'); // LOADING, WAITING, RUNNING, ENDED
-
+ 
   const ELECTION_START = new Date('2026-02-06T08:00:00'); // เริ่ม 6 ก.พ. 08:00
   const ELECTION_END = new Date('2026-02-06T17:30:00'); // จบ 6 ก.พ. 16:00
 
@@ -99,7 +99,7 @@ const OverviewTab = () => {
       clearInterval(interval);
     };
 
-  }, []);
+  }, []); 
 
   const isEnded = phase === 'ENDED';
 
@@ -250,7 +250,7 @@ const CandidatesTab = () => {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 sm:gap-3 lg:gap-6 bg-white sm:bg-transparent rounded-2xl overflow-hidden sm:overflow-visible border sm:border-0 border-slate-100 shadow-sm sm:shadow-none">
               {
-                candidates.filter(e => e.number != 0).map((candidate, index) => {
+                candidates.filter(e => e.number > 0).map((candidate, index) => {
                   return (
                     <CandidateCard
                       key={candidate.id}
