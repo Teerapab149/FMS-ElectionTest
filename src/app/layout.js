@@ -1,6 +1,5 @@
 import './globals.css';
 import { Prompt, Kanit } from 'next/font/google'; // 1. นำเข้าทั้ง Prompt และ Kanit
-import WelcomeModal from '../components/WelcomeModal';
 
 // 2. ตั้งค่า Prompt (เหมือนเดิม)
 const prompt = Prompt({
@@ -28,7 +27,6 @@ export default function RootLayout({ children }) {
     <html lang="th">
       {/* 4. ใส่ตัวแปรทั้ง 2 ตัวลงใน body (คั่นด้วยเว้นวรรค) */}
       <body className={`${prompt.variable} ${kanit.variable} font-sans antialiased`}>
-        <WelcomeModal />
         {children}
       </body>
     </html>

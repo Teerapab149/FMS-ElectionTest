@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"; // ✅ เพิ่ม useEffect
 import { useRouter } from "next/navigation";
 import Navbar from "../../components/Navbar";
 
@@ -12,16 +12,19 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // เช็คว่าเคย Login ค้างไว้ไหม?
+  // ✅ เพิ่มส่วนนี้: เช็คทันทีที่เข้ามาหน้านี้ ว่าเคย Login ค้างไว้ไหม?
   useEffect(() => {
     const userStr = localStorage.getItem("currentUser");
 
     if (userStr) {
+      // ถ้ามีข้อมูล User อยู่แล้ว (ล็อกอินค้างไว้)
       const user = JSON.parse(userStr);
+
+      // เช็คต่อเลยว่าโหวตยัง?
       if (user.isVoted) {
-        router.push("/results");
+        router.push("/results"); // โหวตแล้ว -> ไปดูผล
       } else {
-        router.push("/vote");
+        router.push("/vote");    // ยังไม่โหวต -> ไปโหวต
       }
     }
   }, [router]);
@@ -49,21 +52,15 @@ export default function LoginPage() {
         throw new Error(data.error || "Login failed");
       }
 
-      if (data.user) {
-        localStorage.setItem("currentUser", JSON.stringify(data.user));
-        sessionStorage.setItem("justLoggedIn", "true");
+      // Login สำเร็จ -> บันทึกลงเครื่อง
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
 
-        console.log("Saving User to LocalStorage:", data.user); // เช็คใน console หน้า login
+      // เช็คว่า User นี้โหวตหรือยัง แล้วดีดไปให้ถูกหน้า
+      if (data.user.isVoted) {
+        router.push("/results");
+      } else {
+        router.push("/vote");
       }
-
-      // ✅ 2. หน่วงเวลาเล็กน้อย (100-200ms) เพื่อให้ Browser บันทึก Storage ทัน
-      setTimeout(() => {
-        if (data.user.isVoted) {
-          router.push("/results");
-        } else {
-          router.push("/vote");
-        }
-      }, 200);
 
     } catch (err) {
       console.error(err);
@@ -76,6 +73,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900 selection:bg-blue-100">
       <Navbar />
+      {/* Background Grid - ปรับให้จางลงอีกนิดเพื่อให้ดูแพง */}
       <div className="fixed inset-0 z-0 opacity-[0.2] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(to right, #e5e7eb 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
 
       <main className="flex-grow flex items-center justify-center p-4 relative z-10">
@@ -134,6 +132,7 @@ export default function LoginPage() {
             </button>
           </form>
 
+          {/* ปุ่มกลับหน้าหลัก - ปรับให้เป็น Outline Button ที่ดูสะอาดตา */}
           <div className="mt-8 pt-6 border-t border-slate-50 space-y-4">
             <button
               onClick={() => router.push("/")}
@@ -143,6 +142,7 @@ export default function LoginPage() {
               กลับหน้าหลัก
             </button>
 
+            {/* Admin Entrance - วางไว้ใต้ปุ่มกลับหน้าหลักอีกที */}
             <div className="flex justify-center">
               <button
                 onClick={() => router.push("/admin")}
