@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+// ✅ Import useSession to check login status
+import { useSession } from "next-auth/react"; 
 import Navbar from '../components/Navbar';
 import CountdownTimer from '../components/CountdownTimer';
 import MeetCandidatesCard from '../components/MeetCandidatesCard';
@@ -10,9 +12,12 @@ import MeetCandidatesCard from '../components/MeetCandidatesCard';
 import { TrendingUp, CheckCircle2, ArrowRight, Calendar, Users, PieChart, LogIn, Vote, BarChart3 } from "lucide-react";
 
 export default function Home() {
+  // ✅ Use session data instead of localStorage
+  const { data: session, status } = useSession(); 
+  
   const [stats, setStats] = useState({ totalEligible: 0, totalVoted: 0, percentage: "0.00" });
   const [candidates, setCandidates] = useState([]);
-  const [user, setUser] = useState(null);
+  // const [user, setUser] = useState(null); // ❌ Remove this, we use session instead
   const [mounted, setMounted] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(true);
@@ -23,8 +28,9 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true);
-    const storedUser = localStorage.getItem("currentUser");
-    if (storedUser) setUser(JSON.parse(storedUser));
+    // ❌ Remove localStorage logic
+    // const storedUser = localStorage.getItem("currentUser");
+    // if (storedUser) setUser(JSON.parse(storedUser));
 
     const fetchData = async () => {
       try {
@@ -77,17 +83,14 @@ export default function Home() {
       </div>
 
       {/* --- Main Content --- */}
-      {/* เพิ่ม lg:px-24 ช่วยเรื่อง Alignment ไม่ให้ชิดขอบจอ Notebook เกินไป */}
       <main className="flex-grow flex items-center justify-center py-6 lg:py-6 xl:py-10 px-6 md:px-12 lg:px-24 relative z-10">
         <div className="container mx-auto max-w-[1400px] w-full">
 
-          {/* ✅ 1. Alignment Fix: เพิ่ม gap-16/gap-24 เพื่อแยกซ้ายขวาให้สมดุล (Balance) */}
           <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-10 lg:gap-16 xl:gap-24">
 
             {/* ======================= LEFT SIDE ======================= */}
             <div className="w-full lg:w-5/12 xl:w-5/12 flex flex-col items-center lg:items-start text-center lg:text-left space-y-6 lg:space-y-5 xl:space-y-8 relative z-20 animate-fade-in-up">
 
-              {/* ✅ 3. Timer Fix: เพิ่ม mb-4 ให้ Timer ดูมีพื้นที่ ไม่เบียดหัวข้อ */}
               <div className="flex justify-center lg:justify-start w-full mb-1 lg:mb-0">
                 <CountdownTimer />
               </div>
@@ -139,15 +142,17 @@ export default function Home() {
                     animation: ""
                   };
 
-                  if (mounted && user) {
-                    if (!user.isVoted) {
+                  // ✅ Check session status instead of 'user' state
+                  if (status === "authenticated" && session) {
+                    // ✅ Use session.user.isVoted
+                    if (!session.user.isVoted) {
                       btnConfig = {
                         href: "/vote",
                         text: "ลงคะแนน / Vote Now",
-                        gradientBase: "from-[#F59E0B] via-[#D97706] to-[#B45309]",
-                        gradientHover: "from-[#9f1239] via-[#be123c] to-[#e11d48]",
-                        glowColor: "from-[#F59E0B] to-[#e11d48]",
-                        shadow: "shadow-[0_15px_30px_-8px_rgba(245,158,11,0.4)]",
+                        gradientBase: "from-[#10B981] via-[#059669] to-[#047857]",
+                        gradientHover: "from-[#34D399] via-[#10B981] to-[#059669]",
+                        glowColor: "from-[#34D399] to-[#059669]",
+                        shadow: "shadow-[0_15px_30px_-8px_rgba(16,185,129,0.4)]",
                         icon: <Vote className="w-5 h-5 transition-transform duration-500 group-hover:-rotate-12 group-hover:scale-110" />,
                         animation: "animate-pulse"
                       };
@@ -194,7 +199,6 @@ export default function Home() {
             {/* ======================= RIGHT SIDE ======================= */}
             <div className="w-full lg:w-6/12 xl:w-6/12 flex flex-col items-center justify-center animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
 
-              {/* ปรับ gap ระหว่าง Card ให้กว้างขึ้นเล็กน้อยเพื่อความโปร่ง */}
               <div className="w-full max-w-[550px] lg:max-w-full xl:max-w-[600px] flex flex-col gap-5 lg:gap-6 xl:gap-8">
 
                 {/* Stats Card */}

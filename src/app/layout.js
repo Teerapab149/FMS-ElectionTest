@@ -1,7 +1,9 @@
 import './globals.css';
-import { Prompt, Kanit } from 'next/font/google'; // 1. นำเข้าทั้ง Prompt และ Kanit
+// ✅ นำเข้า Providers (Path ถูกต้องแล้วครับ)
+import Providers from "../components/Providers";
+import { Prompt, Kanit } from 'next/font/google';
 
-// 2. ตั้งค่า Prompt (เหมือนเดิม)
+// 2. ตั้งค่า Prompt
 const prompt = Prompt({
   subsets: ['thai', 'latin'],
   weight: ['300', '400', '500', '600', '700'],
@@ -9,11 +11,11 @@ const prompt = Prompt({
   display: 'swap',
 });
 
-// 3. เพิ่มการตั้งค่า Kanit
+// 3. ตั้งค่า Kanit
 const kanit = Kanit({
   subsets: ['thai', 'latin'],
   weight: ['300', '400', '500', '600', '700'],
-  variable: '--font-kanit', // ชื่อตัวแปรต้องไม่ซ้ำกับ prompt
+  variable: '--font-kanit',
   display: 'swap',
 });
 
@@ -25,9 +27,14 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="th">
-      {/* 4. ใส่ตัวแปรทั้ง 2 ตัวลงใน body (คั่นด้วยเว้นวรรค) */}
+      {/* 4. ใส่ font variable ใน className */}
       <body className={`${prompt.variable} ${kanit.variable} font-sans antialiased`}>
-        {children}
+        
+        {/* ✅ 5. เพิ่มตรงนี้: เอา Providers มาครอบ children ไว้ */}
+        <Providers>
+          {children}
+        </Providers>
+
       </body>
     </html>
   );

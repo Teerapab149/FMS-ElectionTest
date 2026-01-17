@@ -1,33 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react"; // ✅ เพิ่ม useEffect
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+// ✅ 1. Import เครื่องมือของ NextAuth
+import { signIn, useSession } from "next-auth/react";
 import Navbar from "../../components/Navbar";
 
 export default function LoginPage() {
   const router = useRouter();
+  // ✅ 2. ใช้ hook เช็คสถานะ Session ปัจจุบัน
+  const { data: session, status } = useSession();
 
   const [studentId, setStudentId] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ✅ เพิ่มส่วนนี้: เช็คทันทีที่เข้ามาหน้านี้ ว่าเคย Login ค้างไว้ไหม?
+  // ✅ 3. เช็คว่าถ้ามี Session อยู่แล้ว ให้ดีดไปหน้าอื่นเลย (ไม่ต้อง Login ซ้ำ)
   useEffect(() => {
-    const userStr = localStorage.getItem("currentUser");
-
-    if (userStr) {
-      // ถ้ามีข้อมูล User อยู่แล้ว (ล็อกอินค้างไว้)
-      const user = JSON.parse(userStr);
-
-      // เช็คต่อเลยว่าโหวตยัง?
-      if (user.isVoted) {
-        router.push("/results"); // โหวตแล้ว -> ไปดูผล
+    if (status === "authenticated" && session) {
+      if (session.user.isVoted) {
+        router.replace("/results"); // โหวตแล้ว -> ไปดูผล
       } else {
-        router.push("/vote");    // ยังไม่โหวต -> ไปโหวต
+        router.replace("/vote");    // ยังไม่โหวต -> ไปโหวต
       }
     }
-  }, [router]);
+  }, [status, session, router]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -35,45 +33,42 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ studentId, password }),
+      // ✅ 4. เรียกใช้ signIn ของ NextAuth
+      const result = await signIn("credentials", {
+        username: studentId, // map ให้ตรงกับ auth.js ที่เรารับค่า 'username'
+        password: password,
+        redirect: false,     // ปิด Auto Redirect เพื่อเราจะคุมเอง
       });
 
-      const contentType = res.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        throw new Error("ระบบหลังบ้านไม่ได้ส่ง JSON กลับมา (เช็คไฟล์ route.js)");
-      }
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Login failed");
-      }
-
-      // Login สำเร็จ -> บันทึกลงเครื่อง
-      localStorage.setItem("currentUser", JSON.stringify(data.user));
-
-      // เช็คว่า User นี้โหวตหรือยัง แล้วดีดไปให้ถูกหน้า
-      if (data.user.isVoted) {
-        router.push("/results");
+      if (result.error) {
+        // กรณี Login ไม่ผ่าน
+        setError("รหัสนักศึกษาหรือรหัสผ่านไม่ถูกต้อง");
+        setLoading(false);
       } else {
-        router.push("/vote");
+        // 🎉 Login ผ่าน!
+        // สั่ง refresh เพื่อให้ Server Component อัปเดต Session
+        router.refresh(); 
+        // ไม่ต้องเช็ค isVoted ตรงนี้ ให้ useEffect ด้านบนทำงานแทน หรือดีดไป /vote ก่อน
+        // (เพราะ signIn แบบ redirect:false จะยังไม่ได้ session ใหม่ทันทีในบรรทัดนี้)
+        router.push("/vote"); 
       }
 
     } catch (err) {
       console.error(err);
-      setError(err.message);
-    } finally {
+      setError("เกิดข้อผิดพลาดในการเชื่อมต่อ");
       setLoading(false);
     }
   };
 
+  // ถ้ากำลังเช็ค Session อยู่ ให้แสดง Loading ว่างๆ หรือ Spinner (ป้องกันหน้ากระพริบ)
+  if (status === "loading") {
+    return <div className="min-h-screen bg-slate-50"></div>; 
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900 selection:bg-blue-100">
       <Navbar />
-      {/* Background Grid - ปรับให้จางลงอีกนิดเพื่อให้ดูแพง */}
+      {/* Background Grid */}
       <div className="fixed inset-0 z-0 opacity-[0.2] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#e5e7eb 1px, transparent 1px), linear-gradient(to right, #e5e7eb 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
 
       <main className="flex-grow flex items-center justify-center p-4 relative z-10">
@@ -132,7 +127,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* ปุ่มกลับหน้าหลัก - ปรับให้เป็น Outline Button ที่ดูสะอาดตา */}
+          {/* ปุ่มกลับหน้าหลัก */}
           <div className="mt-8 pt-6 border-t border-slate-50 space-y-4">
             <button
               onClick={() => router.push("/")}
@@ -142,7 +137,7 @@ export default function LoginPage() {
               กลับหน้าหลัก
             </button>
 
-            {/* Admin Entrance - วางไว้ใต้ปุ่มกลับหน้าหลักอีกที */}
+            {/* Admin Entrance */}
             <div className="flex justify-center">
               <button
                 onClick={() => router.push("/admin")}
