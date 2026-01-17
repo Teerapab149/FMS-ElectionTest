@@ -1,4 +1,5 @@
 "use client";
+export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -11,7 +12,7 @@ import { ELECTION_CONFIG } from "../../utils/electionConfig";
 import { Users, Trophy, PieChart as PieIcon, BarChart3, Medal, Activity, Megaphone, Calendar, Loader2, Lock, ArrowRight, Home } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend
+  PieChart, Pie, Cell, Legend,
 } from 'recharts';
 
 export default function ResultsPage() {
@@ -156,13 +157,15 @@ export default function ResultsPage() {
     }
   }, [status]);
 
- // ==========================================
+  const now = new Date();
+
+  // ==========================================
   // 🕒 3. TIME CONFIGURATION (ปรับปรุงใหม่)
   // ==========================================
   const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
-  
+
   // แปลงทุกอย่างเป็น Time (ms) เพื่อความแม่นยำ
-  const nowMs = currentTime.getTime(); 
+  const nowMs = currentTime.getTime();
   const startMs = ELECTION_START.getTime();
   const endMs = ELECTION_END.getTime();
 
@@ -226,7 +229,7 @@ export default function ResultsPage() {
 
       {/* ✅ 5. Main Content (ครอบด้วย isAuthorized เพื่อกันการ Flash ของข้อมูล) */}
       <main className={`flex-1 relative z-10 w-full max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-32 md:py-10 transition-all duration-700 ${!isAuthorized ? 'opacity-0 scale-95 blur-sm' : 'opacity-100 scale-100 blur-0'}`}>
-        
+
         {isAuthorized && (
           <>
             {/* Header (จากโค้ดเดิมของคุณ) */}
@@ -399,8 +402,8 @@ export default function ResultsPage() {
             </div>
             <h2 className="text-2xl font-black text-slate-800 mb-3">ข้อมูลถูกล็อกไว้</h2>
             <p className="text-slate-500 mb-8 leading-relaxed">
-              ในช่วงการลงคะแนนเสียง <br/>
-              คุณต้อง **{modalType === "VOTE" ? "ลงคะแนนเลือกตั้ง" : "ทำแบบประเมิน"}** ให้เสร็จก่อน <br/>
+              ในช่วงการลงคะแนนเสียง <br />
+              คุณต้อง **{modalType === "VOTE" ? "ลงคะแนนเลือกตั้ง" : "ทำแบบประเมิน"}** ให้เสร็จก่อน <br />
               ถึงจะสามารถเข้าดูสถิติและผลคะแนนได้
             </p>
             <div className="space-y-3">
@@ -411,7 +414,7 @@ export default function ResultsPage() {
                 {modalType === "VOTE" ? "ไปหน้าลงคะแนน" : "ไปทำแบบประเมิน"}
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
               </button>
-              <button 
+              <button
                 onClick={() => router.replace("/")}
                 className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
               >

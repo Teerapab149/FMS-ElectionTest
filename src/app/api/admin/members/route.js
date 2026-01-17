@@ -4,8 +4,13 @@ import { db } from "../../../../lib/db";
 export async function GET() {
   try {
     const members = await db.member.findMany({
-      include: {
-        // ✅ ดึงข้อมูลพรรคแม่มาด้วย (เพื่อเอาเบอร์พรรค)
+      select: {
+        id: true,
+        studentId: true,
+        name: true,
+        imageUrl: true,
+        position: true,
+        candidateId: true,
         candidate: {
           select: {
             number: true,
@@ -15,8 +20,8 @@ export async function GET() {
         }
       },
       orderBy: [
-        { candidate: { number: 'asc' } }, // เรียงตามเบอร์พรรคก่อน
-        { id: 'asc' } // แล้วค่อยเรียงตามลำดับการสมัคร
+        { candidate: { number: 'asc' } },
+        { id: 'asc' }
       ]
     });
 
