@@ -156,24 +156,30 @@ export default function ResultsPage() {
     }
   }, [status]);
 
-  // ==========================================
-  // 🕒 3. TIME CONFIGURATION (คงเดิม)
+ // ==========================================
+  // 🕒 3. TIME CONFIGURATION (ปรับปรุงใหม่)
   // ==========================================
   const { ELECTION_START, ELECTION_END } = ELECTION_CONFIG;
-  const now = currentTime;
+  
+  // แปลงทุกอย่างเป็น Time (ms) เพื่อความแม่นยำ
+  const nowMs = currentTime.getTime(); 
+  const startMs = ELECTION_START.getTime();
+  const endMs = ELECTION_END.getTime();
+
   let electionStatus = "WAITING";
   let targetDate = ELECTION_START;
 
-  if (now < ELECTION_START) {
+  if (nowMs < startMs) {
     electionStatus = "WAITING";
     targetDate = ELECTION_START;
-  } else if (now >= ELECTION_START && now < ELECTION_END) {
+  } else if (nowMs >= startMs && nowMs < endMs) {
     electionStatus = "ONGOING";
     targetDate = ELECTION_END;
   } else {
+    // 🔴 ถ้าเวลาปัจจุบันเลยเวลาปิดไปแล้ว (หรือเท่ากับ)
     electionStatus = "ENDED";
+    targetDate = null; // ไม่ต้องมีเป้าหมายนับถอยหลังแล้ว
   }
-
   const finalStatus = serverStatus !== "WAITING" ? serverStatus : electionStatus;
 
   const timeDiff = targetDate - now;
