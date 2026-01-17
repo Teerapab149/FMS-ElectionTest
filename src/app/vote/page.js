@@ -11,7 +11,8 @@ import { CheckCircle, Ban, UserX, AlertCircle, Check, Loader2 } from 'lucide-rea
 
 export default function VotePage() {
   const router = useRouter();
-  const { data: session, status } = useSession(); // ✅ ตรวจสอบ Session
+  // ✅ แก้ไข: เพิ่มฟังก์ชัน update เข้ามาเพื่อใช้รีเฟรชข้อมูลในเครื่อง
+  const { data: session, status, update } = useSession(); 
 
   // State ข้อมูล
   const [candidates, setCandidates] = useState([]);
@@ -35,7 +36,6 @@ export default function VotePage() {
 
     const fetchData = async () => {
       try {
-        // ใช้ studentId จาก session (ต้องมั่นใจว่า map ใน callbacks ของ NextAuth แล้ว)
         const studentId = session?.user?.studentId || session?.user?.id;
 
         const [candidatesRes, userStatusRes] = await Promise.all([
@@ -48,7 +48,6 @@ export default function VotePage() {
         if (userStatusRes.ok) {
           const userData = await userStatusRes.json();
 
-          // ❌ ถ้า Server บอกว่าโหวตแล้ว ดีดออกไปหน้าผลลัพธ์ทันที
           if (userData.isVoted) {
             router.replace("/results");
             return;
@@ -102,8 +101,11 @@ export default function VotePage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
+      // ✅ จุดที่เพิ่ม: สั่งให้ NextAuth รีเฟรช Session ในเครื่องทันที
+      // บรรทัดนี้จะทำให้ปุ่มในหน้าหลักเปลี่ยนเป็น "ดูผลคะแนน" ทันทีที่โหวตเสร็จ
+      await update({ isVoted: true });
+
       // ✅ ส่งพารามิเตอร์ ?voted=true เพื่อบอกหน้า success ว่าเพิ่งโหวตเสร็จ
-      // ช่วยป้องกันการตีกลับ (Race Condition)
       setIsConfirmModalOpen(false);
       router.replace("/success?voted=true");
 

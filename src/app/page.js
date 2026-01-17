@@ -17,7 +17,6 @@ export default function Home() {
   
   const [stats, setStats] = useState({ totalEligible: 0, totalVoted: 0, percentage: "0.00" });
   const [candidates, setCandidates] = useState([]);
-  // const [user, setUser] = useState(null); // ❌ Remove this, we use session instead
   const [mounted, setMounted] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(true);
@@ -28,9 +27,6 @@ export default function Home() {
 
   useEffect(() => {
     setMounted(true);
-    // ❌ Remove localStorage logic
-    // const storedUser = localStorage.getItem("currentUser");
-    // if (storedUser) setUser(JSON.parse(storedUser));
 
     const fetchData = async () => {
       try {
@@ -67,6 +63,9 @@ export default function Home() {
     }
   }, [currentImageIndex, extendedImages.length, isMultiImage]);
 
+  // ป้องกันการ Render ผิดพลาดก่อน Hydration
+  if (!mounted) return null;
+
   return (
     <div className="min-h-screen w-full flex flex-col bg-[#F8F9FD] text-slate-900 font-sans selection:bg-[#8A2680] selection:text-white relative">
 
@@ -82,7 +81,6 @@ export default function Home() {
         <Navbar />
       </div>
 
-      {/* --- Main Content --- */}
       <main className="flex-grow flex items-center justify-center py-6 lg:py-6 xl:py-10 px-6 md:px-12 lg:px-24 relative z-10">
         <div className="container mx-auto max-w-[1400px] w-full">
 
@@ -131,6 +129,11 @@ export default function Home() {
               {/* Dynamic Button */}
               <div className="w-full flex justify-center lg:justify-start pt-1">
                 {(() => {
+                  // ✅ 1. สถานะกำลังโหลด
+                  if (status === "loading") {
+                    return <div className="px-10 py-4 rounded-xl bg-slate-100 text-slate-400 font-bold animate-pulse">Checking status...</div>;
+                  }
+
                   let btnConfig = {
                     href: "/login",
                     text: "เข้าสู่ระบบ / Sign in",
@@ -142,21 +145,10 @@ export default function Home() {
                     animation: ""
                   };
 
-                  // ✅ Check session status instead of 'user' state
+                  // ✅ 2. เช็คสถานะ Login และการโหวตจาก Session
                   if (status === "authenticated" && session) {
-                    // ✅ Use session.user.isVoted
-                    if (!session.user.isVoted) {
-                      btnConfig = {
-                        href: "/vote",
-                        text: "ลงคะแนน / Vote Now",
-                        gradientBase: "from-[#10B981] via-[#059669] to-[#047857]",
-                        gradientHover: "from-[#34D399] via-[#10B981] to-[#059669]",
-                        glowColor: "from-[#34D399] to-[#059669]",
-                        shadow: "shadow-[0_15px_30px_-8px_rgba(16,185,129,0.4)]",
-                        icon: <Vote className="w-5 h-5 transition-transform duration-500 group-hover:-rotate-12 group-hover:scale-110" />,
-                        animation: "animate-pulse"
-                      };
-                    } else {
+                    if (session.user?.isVoted === true) {
+                      // เคส: โหวตแล้ว -> ไปหน้า Results
                       btnConfig = {
                         href: "/results",
                         text: "ดูผลคะแนน / Results",
@@ -166,6 +158,18 @@ export default function Home() {
                         shadow: "shadow-[0_10px_20px_-5px_rgba(14,165,233,0.4)]",
                         icon: <BarChart3 className="w-5 h-5 transition-transform duration-500 group-hover:scale-110" />,
                         animation: ""
+                      };
+                    } else {
+                      // เคส: ยังไม่โหวต -> ไปหน้า Vote
+                      btnConfig = {
+                        href: "/vote",
+                        text: "ลงคะแนน / Vote Now",
+                        gradientBase: "from-[#10B981] via-[#059669] to-[#047857]",
+                        gradientHover: "from-[#34D399] via-[#10B981] to-[#059669]",
+                        glowColor: "from-[#34D399] to-[#059669]",
+                        shadow: "shadow-[0_15px_30px_-8px_rgba(16,185,129,0.4)]",
+                        icon: <Vote className="w-5 h-5 transition-transform duration-500 group-hover:-rotate-12 group-hover:scale-110" />,
+                        animation: "animate-pulse"
                       };
                     }
                   }
